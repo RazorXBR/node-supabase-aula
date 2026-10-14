@@ -1,6 +1,5 @@
 require('dotenv').config();
 
-// importa a função que constrói o cliente HTTP do Supabase
 const { createClient } = require('@supabase/supabase-js');
 
 const SUPABASE_URL = process.env.SUPABASE_URL;
@@ -12,6 +11,8 @@ if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
+// ==================== CURSOS ====================
+
 async function inserirCurso(nome) {
   const { data, error } = await supabase
     .from('cursos')
@@ -20,13 +21,13 @@ async function inserirCurso(nome) {
     .single();
 
   if (error) throw error;
-  return data;    // { id, nome, criado_em }
+  return data;
 }
 
 async function listarCursos() {
   const { data, error } = await supabase
     .from('cursos')
-    .select('id, nome, alunos(count)')   // conta os alunos relacionados
+    .select('id, nome, alunos(count)')
     .order('nome', { ascending: true });
 
   if (error) throw error;
@@ -44,3 +45,73 @@ async function excluirCurso(id) {
   if (error) throw error;
   return data;
 }
+
+// ==================== ALUNOS ====================
+
+const COLUNAS_ALUNO = 'id, nome, ra, curso_id, criado_em, curso:cursos(id, nome)';
+
+async function inserirAluno(nome, ra, cursoId) {
+  const { data, error } = await supabase
+    .from('alunos')
+    .insert([{ nome, ra, curso_id: cursoId }])
+    .select(COLUNAS_ALUNO)
+    .single();
+
+  if (error) throw error;
+  return data;
+}
+
+async function listarAlunos() {
+  const { data, error } = await supabase
+    .from('alunos')
+    .select(COLUNAS_ALUNO)
+    .order('id', { ascending: true });
+
+  if (error) throw error;
+  return data;
+}
+
+async function listarAlunosDoCurso(cursoId) {
+  const { data, error } = await supabase
+    .from('alunos')
+    .select(COLUNAS_ALUNO)
+    .eq('curso_id', cursoId)
+    .order('nome', { ascending: true });
+
+  if (error) throw error;
+  return data;
+}
+
+async function buscarPorRa(ra) {
+  const { data, error } = await supabase
+    .from('alunos')
+    .select(COLUNAS_ALUNO)
+    .eq('ra', ra)
+    .maybeSingle();
+
+  if (error) throw error;
+  return data;
+}
+
+async function buscarPorNome(parteNome) {
+  const { data, error } = await supabase
+    .from('alunos')
+    .select(COLUNAS_ALUNO)
+    .ilike('nome', `%${parteNome}%`)
+    .order('nome', { ascending: true });
+
+  if (error) throw error;
+  return data;
+}
+
+module.exports = {
+  supabase,
+  inserirCurso,
+  listarCursos,
+  excluirCurso,
+  inserirAluno,
+  listarAlunos,
+  listarAlunosDoCurso,
+  buscarPorRa,
+  buscarPorNome
+};
