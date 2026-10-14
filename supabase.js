@@ -104,14 +104,36 @@ async function buscarPorNome(parteNome) {
   return data;
 }
 
+async function atualizarAluno(ra, nome, cursoId) {
+  const campos = {};
+  if (nome) campos.nome = nome;           
+  if (cursoId) campos.curso_id = cursoId;   
+
+  if (!Object.keys(campos).length) {
+    throw new Error('Informe nome e/ou curso para atualizar');
+  }
+  const { data, error } = await supabase
+    .from('alunos')
+    .update(campos)
+    .eq('ra', ra)
+    .select(COLUNAS_ALUNO);
+
+  if (error) throw error;
+  return data;
+}
+
+async function excluirPorRa(ra) {
+  const { data, error } = await supabase
+    .from('alunos').delete().eq('ra', ra).select();
+
+  if (error) throw error;
+  return data;
+}
+
+// Único bloco de exportação no final
 module.exports = {
   supabase,
-  inserirCurso,
-  listarCursos,
-  excluirCurso,
-  inserirAluno,
-  listarAlunos,
-  listarAlunosDoCurso,
-  buscarPorRa,
-  buscarPorNome
+  inserirCurso, listarCursos, excluirCurso,
+  inserirAluno, listarAlunos, listarAlunosDoCurso,
+  buscarPorRa, buscarPorNome, atualizarAluno, excluirPorRa,
 };
