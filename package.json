@@ -3,10 +3,10 @@
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
-"scripts": {
- "demo": "node index.js",
- "start": "node server.js"
- },
+  "scripts": {
+    "demo": "node index.js",
+    "start": "node server.js"
+  },
   "keywords": [],
   "author": "",
   "license": "ISC",
