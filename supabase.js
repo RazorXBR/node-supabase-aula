@@ -122,6 +122,38 @@ async function atualizarAluno(ra, nome, cursoId) {
   return data;
 }
 
+// ==== ATUALIZADO: PAGINAÇÃO, BUSCA (ilike) E ORDENAÇÃO ====
+async function listarAlunosPaginado(cursoId, inicio = 0, limite, termo = '', coluna = '', ascendente = true) {
+  let consulta = supabase.from('alunos')
+    .select(COLUNAS_ALUNO, limite ? { count: 'exact' } : undefined);
+
+  if (cursoId) consulta = consulta.eq('curso_id', cursoId);
+
+  // Filtro de pesquisa (nome OU ra)
+  const limpo = termo.replace(/[%,]/g, '').trim();
+  if (limpo) {
+    consulta = consulta.or(`nome.ilike.%${limpo}%,ra.ilike.%${limpo}%`);
+  }
+
+  // Ordenação clicável dos cabeçalhos
+  if (coluna === 'curso') {
+    consulta = consulta.order('nome', { ascending: ascendente, foreignTable: 'cursos' });
+  } else if (coluna === 'nome' || coluna === 'ra') {
+    consulta = consulta.order(coluna, { ascending: ascendente });
+  }
+  
+  // Desempate padrão para manter consistência nas páginas
+  consulta = consulta.order('id', { ascending: true });
+
+  if (limite) consulta = consulta.range(inicio, inicio + limite - 1);
+
+  const { data, error, count } = await consulta;
+  if (error) throw error;
+
+  if (!limite) return data || [];
+  return { alunos: data || [], total: count ?? 0 };
+}
+
 async function excluirPorRa(ra) {
   const { data, error } = await supabase
     .from('alunos').delete().eq('ra', ra).select();
@@ -136,4 +168,5 @@ module.exports = {
   inserirCurso, listarCursos, excluirCurso,
   inserirAluno, listarAlunos, listarAlunosDoCurso,
   buscarPorRa, buscarPorNome, atualizarAluno, excluirPorRa,
+  listarAlunosPaginado,
 };
